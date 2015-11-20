@@ -124,11 +124,12 @@ class PlayMusic():
     def __search_tracks(self, *query_items):
         query = ' '.join(query_items)
         retries = 5
-        while retries:
+        response = None
+        while retries and not response:
+            retries -= 1
             try:
                 response = self.client.search_all_access(query)
             except CallFailure, e:
-                retries -= 1
                 if not retries:
                     raise e
                 # sleep for two seconds before retrying

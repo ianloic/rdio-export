@@ -83,7 +83,7 @@ def migrate_favorites(rdio_username):
                 sys.exit(1)
 
         for rdio_track in rdio_tracks:
-            print "%(name)s / %(artist)s / %(album)s" % rdio_track
+            # print "%(name)s / %(artist)s / %(album)s" % rdio_track
             track = Track(rdio_track, pm.match_track(rdio_track))
             logfile.write(unicode(track))
             logfile.write('\n')
@@ -95,12 +95,11 @@ def migrate_favorites(rdio_username):
                 bad += 1
             else:
                 failed += 1
-
-
-"""
-            sys.stdout.write('\r%d/%d scanned. %d good, %d bad, %d failed' % (
-                len(favorites), user['trackCount'], good, bad, failed))
+            count = len(favorites)
+            percentage = int(100 * count / float(user['trackCount']))
+            sys.stdout.write(' % 6d/%d scanned % 2d%%. %d good, %d bad, %d failed\r' % (
+                count, user['trackCount'], percentage, good, bad, failed))
             sys.stdout.flush()
-"""
+
 
 migrate_favorites('ian')
