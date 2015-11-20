@@ -30,6 +30,10 @@ class PlayMusic():
     def track_url(play_track):
         return 'https://play.google.com/music/m/%s' % play_track['nid']
 
+    @staticmethod
+    def playlist_url(playlist_id):
+        return 'https://play.google.com/music/playlist/%s' % playlist_id
+
     def __search_tracks(self, *query_items):
         query = ' '.join(query_items)
         retries = 5

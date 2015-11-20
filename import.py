@@ -57,17 +57,25 @@ class Track:
 
 
 def migrate_playlist(user_key, playlist, kind):
+    print u'\nMigrating playlist: %s' % playlist['name']
     name = playlist['name']
     if playlist['ownerKey'] != user_key:
         name += u' (by %s)' % playlist['owner']
     description = u'Imported from Rdio playlist %s\n' % playlist['shortUrl']
     play_track_ids = []
+    failed_tracks = []
     for rdio_track in playlist['tracks']:
         match = Track(rdio_track, pm.match_track(rdio_track))
-        description += unicode(match)
         if match.play_id:
             play_track_ids.append(match.play_id)
-    pm.create_playlist(name, description, play_track_ids)
+        else:
+            failed_tracks.append(rdio_track)
+    if failed_tracks:
+        description += 'Failed to import: '
+        for failed_track in failed_tracks:
+            description += u'%(shortUrl)s (%(name)s / %(artist)s / %(album)s)' % failed_track
+    playlist_id = pm.create_playlist(name, description, play_track_ids)
+    print u'Imported to %s' % pm.playlist_url(playlist_id)
 
 
 def migrate_playlists_kind(user_key, kind):
