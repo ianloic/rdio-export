@@ -10,6 +10,9 @@ print 'Connecting to Rdio...'
 rdio = Rdio()
 print 'Connecting to Play Music...'
 pm = PlayMusic()
+if not pm.is_authenticated():
+    print 'Google login failed.'
+    sys.exit(1)
 
 
 class Track:
@@ -25,7 +28,7 @@ class Track:
             self.match = play_track['match']
         else:
             self.play = ''
-            self.play_id = ''
+            self.play_id = None
             self.match = 0
 
     def good(self):
@@ -42,7 +45,7 @@ class Track:
             stream = '+'
         else:
             stream = '-'
-        return u'%03d %24s %s %s %s / %s / %s' % (
+        return u'%03d %-24s %s %s %s / %s / %s' % (
             self.match,
             self.rdio,
             stream,
@@ -51,6 +54,37 @@ class Track:
             self.artist,
             self.album,
         )
+
+
+def migrate_playlist(user_key, playlist, kind):
+    name = playlist['name']
+    if playlist['ownerKey'] != user_key:
+        name += u' (by %s)' % playlist['owner']
+    description = u'Imported from Rdio playlist %s\n' % playlist['shortUrl']
+    play_track_ids = []
+    for rdio_track in playlist['tracks']:
+        match = Track(rdio_track, pm.match_track(rdio_track))
+        description += unicode(match)
+        if match.play_id:
+            play_track_ids.append(match.play_id)
+    pm.create_playlist(name, description, play_track_ids)
+
+
+def migrate_playlists_kind(user_key, kind):
+    start = 0
+    while True:
+        playlists = rdio.call('getUserPlaylists', user=user_key, kind=kind, extras='tracks,ownerKey', start=start)
+        if not playlists:
+            return
+        start += len(playlists)
+        for playlist in playlists:
+            migrate_playlist(user_key, playlist, kind)
+
+
+def migrate_playlists(rdio_username):
+    user = rdio.call('findUser', vanityName=rdio_username, extras='trackCount')
+    for kind in ('owned', 'collab', 'favorites', 'subscribed'):
+        migrate_playlists_kind(user['key'], kind)
 
 
 def migrate_favorites(rdio_username):
@@ -83,7 +117,6 @@ def migrate_favorites(rdio_username):
                 sys.exit(1)
 
         for rdio_track in rdio_tracks:
-            # print "%(name)s / %(artist)s / %(album)s" % rdio_track
             track = Track(rdio_track, pm.match_track(rdio_track))
             logfile.write(unicode(track))
             logfile.write('\n')
@@ -102,4 +135,5 @@ def migrate_favorites(rdio_username):
             sys.stdout.flush()
 
 
-migrate_favorites('ian')
+#migrate_favorites('ian')
+migrate_playlists('ian')
