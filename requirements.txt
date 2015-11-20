@@ -1,0 +1,7 @@
+# Run 'pip install -r requirements.txt -t lib/' to install these dependencies
+# in `lib/` subdirectory.
+
+gmusicapi
+oauth2
+requests
+requests-oauth2
