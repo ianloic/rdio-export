@@ -25,20 +25,22 @@ def migrate_playlist(user_key, playlist, logfile):
     description = u'Imported from Rdio playlist %s\n' % playlist['shortUrl']
     play_track_ids = []
     failed = []
-    for match in match_tracks(playlist['tracks'], len(playlist['tracks']), pm, logfile):
-        if match.play_id:
-            play_track_ids.append(match.play_id)
+    tracks = rdio.playlist_tracks(playlist)
+    for match in match_tracks(tracks, len(tracks), pm, logfile):
+        if match.matched():
+            play_track_ids.append(match.play.id)
         else:
             failed.append(match)
     if failed:
         description += 'Failed to import: '
         for match in failed:
-            description += u'%s (%s / %s / %s)' % (match.rdio, match.name, match.artist, match.album)
+            description += u'%s (%s / %s / %s)' % (match.rdio.url, match.rdio.name, match.rdio.artist, match.rdio.album)
     playlist_id = pm.create_playlist(name, description, play_track_ids)
     print u'Imported to %s' % pm.playlist_url(playlist_id)
 
 
 def migrate_playlists(rdio_username):
+    print 'Finding playlists...'
     logfile = codecs.open('playlists-log.txt', 'wt', 'utf-8')
     user = rdio.call('findUser', vanityName=rdio_username, extras='trackCount')
     user_key = user['key']
@@ -66,9 +68,9 @@ def migrate_favorites(rdio_username):
     rdio_tracks = rdio.favorite_tracks(user['key'])
     matched_tracks = match_tracks(rdio_tracks, user['trackCount'], pm, logfile)
     for match in matched_tracks:
-        if match.play_id and match.good():
+        if match.matched():
             pm.add_track(match.play_id)
 
 
-#migrate_favorites('ian')
+# migrate_favorites('ian')
 migrate_playlists('ian')

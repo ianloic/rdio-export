@@ -1,7 +1,27 @@
 import requests
 
-CLIENT_ID = 'p4e6qtaqprct7h2c3y3qxhobmm'
-CLIENT_SECRET = 'ZQpKs4rAen7eKMTwTX9IXg'
+import time
+
+from match import Track
+
+#CLIENT_ID = 'p4e6qtaqprct7h2c3y3qxhobmm'
+#CLIENT_SECRET = 'ZQpKs4rAen7eKMTwTX9IXg'
+CLIENT_ID = 'e3b4yf4qlfaczasrh5y2t7wr74'
+CLIENT_SECRET = 'Gtwwvr2toSey0O_slclZUw'
+
+
+class RdioTrack(Track):
+    def __init__(self, rdio_track):
+        Track.__init__(self,
+                       id=rdio_track['key'],
+                       url=rdio_track['shortUrl'],
+                       name=rdio_track['name'],
+                       artist=rdio_track['artist'],
+                       album=rdio_track['album'],
+                       album_artist=rdio_track.get('albumArtist'),
+                       duration=rdio_track['duration'],
+                       track_num=rdio_track['trackNum'],
+                       available=rdio_track['canStream'])
 
 
 class Rdio:
@@ -18,12 +38,28 @@ class Rdio:
 
     def call(self, method, **args):
         args['method'] = method
-        r = requests.post('https://services.rdio.com/api/1/', data=args,
-                          headers={'Authorization': 'Bearer ' + self.bearer_token})
-        return r.json()['result']
+        retries = 5
+        while retries:
+            r = requests.post('https://services.rdio.com/api/1/', data=args,
+                              headers={'Authorization': 'Bearer ' + self.bearer_token})
+            if r.status_code != 408:
+                return r.json()['result']
+            else:
+                retries -= 1
+                time.sleep(3)
+        raise Exception('Rdio API call "%s" failed' % method)
 
     def get_one(self, key, extras=''):
         return self.call('get', keys=key, extras=extras)[key]
+
+    @staticmethod
+    def playlist_tracks(playlist):
+        """
+        Turn an Rdio API playlist response into a list of Tracks that can be matched.
+        :param playlist: a playlist from the Rdio service that includes the 'tracks' extra
+        :return: an array of RdioTracks for the playlist's tracks
+        """
+        return [RdioTrack(t) for t in playlist['tracks']]
 
     def favorite_tracks(self, user_key):
         """
@@ -40,7 +76,7 @@ class Rdio:
             for fave in faves:
                 if fave['type'] == 'a':
                     for track in fave['tracks']:
-                        yield track
+                        yield RdioTrack(track)
                 elif fave['type'] == 't':
-                    yield fave
+                    yield RdioTrack(fave)
 

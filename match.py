@@ -1,12 +1,26 @@
-# from: http://stackoverflow.com/questions/2460177/edit-distance-in-python
 import re
-
+import sys
 import unicodedata
 
-import sys
+
+class Track:
+    def __init__(self, id, url, name, artist, album, album_artist, duration, track_num, available=True):
+        self.id = id
+        self.url = url
+        self.name = name
+        self.artist = artist
+        self.album = album
+        self.album_artist = album_artist
+        self.duration = duration
+        self.track_num = track_num
+        self.available = available
+
+    def __str__(self):
+        return '%s / %s / %s <%s>' % (self.name, self.artist, self.album, self.url)
 
 
 def levenshteinDistance(s1, s2):
+    # from: http://stackoverflow.com/questions/2460177/edit-distance-in-python
     if len(s1) > len(s2):
         s1, s2 = s2, s1
 
@@ -81,92 +95,89 @@ def delta(a, b):
 
 
 def track_match(play_track, rdio_track):
+    """
+    :type play_track Track
+    :type rdio_track Track
+    :rtype int
+    """
     percentages = [
-        string_match(play_track['title'], rdio_track['name']),
-        string_match(play_track['artist'], rdio_track['artist']),
-        string_match(play_track['album'], rdio_track['album']),
-        delta(int(play_track['trackNumber']), rdio_track['trackNum']),
+        string_match(play_track.name, rdio_track.name),
+        string_match(play_track.artist, rdio_track.artist),
+        string_match(play_track.album, rdio_track.album),
+        delta(int(play_track.track_num), rdio_track.track_num),
     ]
-    if rdio_track['duration']:
-        percentages.append(delta(int(play_track['durationMillis']) / 1000, rdio_track['duration']))
-    if 'albumArtist' in rdio_track:
-        percentages.append(string_match(play_track['albumArtist'], rdio_track['albumArtist']))
+    if rdio_track.duration and play_track.duration:
+        percentages.append(delta(play_track.duration, rdio_track.duration))
+    if rdio_track.album_artist and play_track.album_artist:
+        percentages.append(string_match(play_track.album_artist, rdio_track.album_artist))
     return average(percentages)
 
 
 def best_match(play_tracks, rdio_track):
+    """
+    :type play_tracks List[Track]
+    :type rdio_track Track
+    :rtype TrackMatch
+    """
+    if not play_tracks:
+        # If there were no matches on Play, return an empty match.
+        return TrackMatch(rdio_track, None, 0)
     # for each track, calculate match percentage
+    score = {}
     for play_track in play_tracks:
-        play_track['match'] = track_match(play_track, rdio_track)
+        score[play_track.id] = track_match(play_track, rdio_track)
     # sort by match
-    play_tracks.sort(lambda a, b: cmp(a['match'], b['match']))
+    play_tracks.sort(lambda a, b: cmp(score[a.id], score[b.id]))
     # chose the highest match
-    return play_tracks[-1]
+    best = play_tracks[-1]
+    return TrackMatch(rdio_track, best, score[best.id])
 
 
 class TrackMatch:
-    def __init__(self, rdio_track, play_track, play_music):
-        self.rdio = rdio_track['shortUrl']
-        self.canStream = rdio_track['canStream']
-        self.name = rdio_track['name']
-        self.artist = rdio_track['artist']
-        self.album = rdio_track['album']
-        if play_track:
-            self.play = play_music.track_url(play_track)
-            self.play_id = play_track['nid']
-            self.match = play_track['match']
-        else:
-            self.play = ''
-            self.play_id = None
-            self.match = 0
+    def __init__(self, rdio_track, play_track, match):
+        """
+        :type rdio_track: Track
+        :type play_track: Track
+        :type match: int
+        """
+        self.rdio = rdio_track
+        self.play = play_track
+        self.match = match
 
-    def good(self):
-        return self.match >= 75
-
-    def failed(self):
-        return self.match <= 50
-
-    def bad(self):
-        return not self.good() and not self.failed()
+    def matched(self):
+        return self.match >= 10
 
     def __str__(self):
-        if self.canStream:
+        if self.rdio.available:
             stream = '+'
         else:
             stream = '-'
-        return u'%03d %-24s %s %s %s / %s / %s' % (
-            self.match,
-            self.rdio,
-            stream,
-            self.play,
-            self.name,
-            self.artist,
-            self.album,
-        )
+        return u'%03d %s %s %s' %(self.match, stream, self.rdio, self.play)
 
 
 def match_tracks(rdio_tracks, num_tracks, play_music, logfile):
     count = 0
-    good = 0
-    bad = 0
-    failed = 0
+    matched = 0
+    unmatched = 0
+    unmatched_missing = 0
 
     for rdio_track in rdio_tracks:
-        match = TrackMatch(rdio_track, play_music.match_track(rdio_track), play_music)
+        matches = play_music.tracks_matching(rdio_track)
+        match = best_match(matches, rdio_track)
         logfile.write(unicode(match))
         logfile.write('\n')
         logfile.flush()
         yield match
-        if match.good():
-            good += 1
-        elif match.bad():
-            bad += 1
+        if match.matched():
+            matched += 1
+        elif match.rdio.available:
+            unmatched += 1
         else:
-            failed += 1
+            unmatched_missing += 1
         count += 1
         percentage = int(100 * count / float(num_tracks))
-        sys.stdout.write(' % 6d/%d scanned % 2d%%. %d good, %d bad, %d failed\r' % (
-            count, num_tracks, percentage, good, bad, failed))
+        sys.stdout.write(' % 6d/%d scanned % 2d%%. %d matched, %d unmatched, %d unmatched but unavailable on Rdio\r' % (
+            count, num_tracks, percentage, matched, unmatched, unmatched_missing))
         sys.stdout.flush()
     sys.stdout.write('\n')
     sys.stdout.flush()
