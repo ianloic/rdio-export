@@ -3,6 +3,8 @@ import re
 
 import unicodedata
 
+import sys
+
 
 def levenshteinDistance(s1, s2):
     if len(s1) > len(s2):
@@ -100,3 +102,71 @@ def best_match(play_tracks, rdio_track):
     play_tracks.sort(lambda a, b: cmp(a['match'], b['match']))
     # chose the highest match
     return play_tracks[-1]
+
+
+class TrackMatch:
+    def __init__(self, rdio_track, play_track, play_music):
+        self.rdio = rdio_track['shortUrl']
+        self.canStream = rdio_track['canStream']
+        self.name = rdio_track['name']
+        self.artist = rdio_track['artist']
+        self.album = rdio_track['album']
+        if play_track:
+            self.play = play_music.track_url(play_track)
+            self.play_id = play_track['nid']
+            self.match = play_track['match']
+        else:
+            self.play = ''
+            self.play_id = None
+            self.match = 0
+
+    def good(self):
+        return self.match >= 75
+
+    def failed(self):
+        return self.match <= 50
+
+    def bad(self):
+        return not self.good() and not self.failed()
+
+    def __str__(self):
+        if self.canStream:
+            stream = '+'
+        else:
+            stream = '-'
+        return u'%03d %-24s %s %s %s / %s / %s' % (
+            self.match,
+            self.rdio,
+            stream,
+            self.play,
+            self.name,
+            self.artist,
+            self.album,
+        )
+
+
+def match_tracks(rdio_tracks, num_tracks, play_music, logfile):
+    count = 0
+    good = 0
+    bad = 0
+    failed = 0
+
+    for rdio_track in rdio_tracks:
+        match = TrackMatch(rdio_track, play_music.match_track(rdio_track), play_music)
+        logfile.write(unicode(match))
+        logfile.write('\n')
+        logfile.flush()
+        yield match
+        if match.good():
+            good += 1
+        elif match.bad():
+            bad += 1
+        else:
+            failed += 1
+        count += 1
+        percentage = int(100 * count / float(num_tracks))
+        sys.stdout.write(' % 6d/%d scanned % 2d%%. %d good, %d bad, %d failed\r' % (
+            count, num_tracks, percentage, good, bad, failed))
+        sys.stdout.flush()
+    sys.stdout.write('\n')
+    sys.stdout.flush()

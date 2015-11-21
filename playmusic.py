@@ -14,10 +14,6 @@ GOOGLE_ANDROID_ID = '10a231a66f301274'
 #  Only Lovers Left Alive (Original Motion Picture Soundtrack)
 
 
-
-
-
-
 class PlayMusic():
     def __init__(self):
         self.client = Mobileclient()
@@ -78,3 +74,7 @@ class PlayMusic():
         playlist_id = self.client.create_playlist(name, description)
         self.client.add_songs_to_playlist(playlist_id, play_track_ids)
         return playlist_id
+
+    def add_track(self, play_id):
+        #self.client.add_aa_track(play_id)
+        pass

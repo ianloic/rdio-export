@@ -2,6 +2,5 @@
 # in `lib/` subdirectory.
 
 gmusicapi
-oauth2
 requests
-requests-oauth2
+
