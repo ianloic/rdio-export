@@ -165,7 +165,7 @@ class TrackMatch:
         return u'%03d %s %s %s' % (self.match, stream, self.rdio, self.play)
 
 
-def match_tracks(rdio_tracks, num_tracks, play_music, logfile):
+def match_tracks(rdio_tracks, num_tracks, play_music):
     count = 0
     matched = 0
     unmatched = 0
@@ -174,9 +174,6 @@ def match_tracks(rdio_tracks, num_tracks, play_music, logfile):
     for rdio_track in rdio_tracks:
         matches = play_music.tracks_matching(rdio_track)
         match = best_match(matches, rdio_track)
-        logfile.write(unicode(match))
-        logfile.write('\n')
-        logfile.flush()
         yield match
         if match.matched():
             matched += 1

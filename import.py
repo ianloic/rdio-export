@@ -18,9 +18,8 @@ if not pm.is_authenticated():
     sys.exit(1)
 
 
-def migrate_playlist(user_key, playlist, logfile):
+def migrate_playlist(user_key, playlist):
     print u'\nMigrating playlist: %s' % playlist['name']
-    logfile.write(u'Playlist: %s\n' % playlist['name'])
     name = playlist['name']
     if playlist['ownerKey'] != user_key:
         name += u' (by %s)' % playlist['owner']
@@ -29,7 +28,7 @@ def migrate_playlist(user_key, playlist, logfile):
     failed = []
     tracks = rdio.playlist_tracks(playlist)
     with Report('playlist-%s.html' % playlist['key'], name) as report:
-        for match in match_tracks(tracks, len(tracks), pm, logfile):
+        for match in match_tracks(tracks, len(tracks), pm):
             report.add_match(match)
             if match.matched():
                 play_track_ids.append(match.play.id)
@@ -46,7 +45,6 @@ def migrate_playlist(user_key, playlist, logfile):
 
 def migrate_playlists(rdio_username):
     print 'Finding playlists...'
-    logfile = codecs.open('playlists-log.txt', 'wt', 'utf-8')
     user = rdio.call('findUser', vanityName=rdio_username, extras='trackCount')
     user_key = user['key']
     playlists = {}
@@ -70,17 +68,16 @@ def migrate_playlists(rdio_username):
             print('Already imported playlist %s. Delete it from Play Music if you want to re-import it.' %
                   playlist['name'])
             continue
-        migrate_playlist(user_key, playlist, logfile)
+        migrate_playlist(user_key, playlist)
 
 
 def migrate_favorites(rdio_username):
-    logfile = codecs.open('favorites-log.txt', 'wt', 'utf-8')
     user = rdio.call('findUser', vanityName=rdio_username, extras='trackCount')
     print 'Migrating %(trackCount)d favorites for %(firstName)s %(lastName)s' % user
 
     rdio_tracks = rdio.favorite_tracks(user['key'])
     with Report('favorites.html', "%(firstName)s %(lastName)s's Favorites" % user) as report:
-        matched_tracks = match_tracks(rdio_tracks, user['trackCount'], pm, logfile)
+        matched_tracks = match_tracks(rdio_tracks, user['trackCount'], pm)
         for match in matched_tracks:
             report.add_match(match)
             if match.matched():
