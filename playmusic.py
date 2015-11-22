@@ -1,21 +1,18 @@
-import time
-
+import re
 import sys
+import time
 
 sys.path.insert(0, 'lib/')
 
 from gmusicapi import Mobileclient, CallFailure
-
-from match import Track, best_match, remove_parens
+from match import Track, remove_parens
 
 GOOGLE_USERNAME = 'import@mckellar.org'
 # GOOGLE_PASSWORD = 'Piah5ohC'
 GOOGLE_PASSWORD = 'ckwykmfopdvqwlfg'
 GOOGLE_ANDROID_ID = '10a231a66f301274'
 
-
-# Failures:
-#  Only Lovers Left Alive (Original Motion Picture Soundtrack)
+MAX_QUERY_LENGTH = 120
 
 
 class PlayTrack(Track):
@@ -27,8 +24,12 @@ class PlayTrack(Track):
                        artist=play_track['artist'],
                        album=play_track['album'],
                        album_artist=play_track['albumArtist'],
-                       duration=int(play_track['durationMillis'])/1000,
+                       duration=int(play_track['durationMillis']) / 1000,
                        track_num=play_track['trackNumber'])
+
+
+def replace_non_alphanumeric(s):
+    return re.sub(r'[^A-Za-z0-9 ]', ' ', s)
 
 
 class PlayMusic():
@@ -49,6 +50,17 @@ class PlayMusic():
 
     def __search_tracks(self, *query_items):
         query = ' '.join(query_items)
+        if len(query) >= MAX_QUERY_LENGTH:
+            # long queries don't work for some reason
+            # for example "The Moderately Talented Yet Attractive Young Woman vs. The Exceptionally Talented Yet Not
+            # So Attractive Middle Aged Man / Sun Kil Moon / Among The Leaves"
+            parts = query.split(' ')
+            query = parts.pop(0)
+            for part in parts:
+                if len(query) + 1 + len(part) > MAX_QUERY_LENGTH:
+                    break
+                query += ' ' + part
+
         retries = 5
         response = None
         while retries and not response:
@@ -67,28 +79,17 @@ class PlayMusic():
         :type rdio_track Track
         """
         # search for matching tracks
-        play_tracks = self.__search_tracks(rdio_track.name,
-                                           rdio_track.artist,
-                                           rdio_track.album)
-        if play_tracks:
-            return play_tracks
-
-        # try without the () [] terms
-        play_tracks = self.__search_tracks(remove_parens(rdio_track.name),
-                                           remove_parens(rdio_track.artist),
-                                           remove_parens(rdio_track.album))
-        if play_tracks:
-            return play_tracks
-        # how about without the album name at all
-        play_tracks = self.__search_tracks(remove_parens(rdio_track.name),
-                                           remove_parens(rdio_track.artist))
-        if play_tracks:
-            return play_tracks
-
-        # TODO: remove non alpha & space (for poorly HTML encoded Le VICE, u-Ziq)
-        # TODO: handle long track names by searching only for artist & album?
-
-        return []
+        return (self.__search_tracks(rdio_track.name,
+                                     rdio_track.artist,
+                                     rdio_track.album) +
+                self.__search_tracks(remove_parens(rdio_track.name),
+                                     remove_parens(rdio_track.artist),
+                                     remove_parens(rdio_track.album)) +
+                self.__search_tracks(remove_parens(rdio_track.name),
+                                     remove_parens(rdio_track.artist)) +
+                self.__search_tracks(replace_non_alphanumeric(rdio_track.name),
+                                     replace_non_alphanumeric(rdio_track.artist),
+                                     replace_non_alphanumeric(rdio_track.album)))
 
     def create_playlist(self, name, description, play_track_ids):
         playlist_id = self.client.create_playlist(name, description)
@@ -97,4 +98,6 @@ class PlayMusic():
 
     def add_track(self, play_id):
         self.client.add_aa_track(play_id)
-        pass
+
+    def get_all_playlists(self):
+        return self.client.get_all_playlists()

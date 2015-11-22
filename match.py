@@ -2,6 +2,8 @@ import re
 import sys
 import unicodedata
 
+COVERS = {'Vitamin String Quartet'}
+
 
 class Track:
     def __init__(self, id, url, name, artist, album, album_artist, duration, track_num, available=True):
@@ -104,6 +106,10 @@ def track_match(play_track, rdio_track):
     :type rdio_track Track
     :rtype int
     """
+    # Exclude artists that specialize in covers, unless they were actually requested
+    if play_track.artist != rdio_track.artist and play_track.artist in COVERS:
+        return 0
+    # TODO: exclude 'Karaoke' tracks (unless that's what we had)
     percentages = [
         string_match(play_track.name, rdio_track.name),
         string_match(play_track.artist, rdio_track.artist),

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import codecs
+import re
 import sys
 
 from match import match_tracks
@@ -37,7 +38,8 @@ def migrate_playlist(user_key, playlist, logfile):
         if failed:
             description += 'Failed to import: '
             for match in failed:
-                description += u'%s (%s / %s / %s)' % (match.rdio.url, match.rdio.name, match.rdio.artist, match.rdio.album)
+                description += u'%s (%s / %s / %s)' % (
+                match.rdio.url, match.rdio.name, match.rdio.artist, match.rdio.album)
         playlist_id = pm.create_playlist(name, description, play_track_ids)
         print u'Imported to %s' % pm.playlist_url(playlist_id)
 
@@ -58,7 +60,16 @@ def migrate_playlists(rdio_username):
             for pl in pls:
                 playlists[pl['key']] = pl
 
+    # Find already imported playlists's Rdio URL.
+    imported = frozenset([m.groups()[0] for m in
+                          [re.match(r'Imported from Rdio playlist (http://rd.io/x/.*?/)', p['description']) for p in
+                           pm.get_all_playlists()] if m])
+
     for playlist in playlists.values():
+        if playlist['shortUrl'] in imported:
+            print('Already imported playlist %s. Delete it from Play Music if you want to re-import it.' %
+                  playlist['name'])
+            continue
         migrate_playlist(user_key, playlist, logfile)
 
 

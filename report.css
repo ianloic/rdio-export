@@ -29,14 +29,20 @@ a {
     margin-bottom: 1px;
 }
 
-.score-10, .score-9, .score-8, .score-7, .score-6, .score-5 {
+.match-ok, .green {
     background-color: rgba(0, 255, 0, 0.1);
+
 }
 
-.score-4, .score-3, .score-2 {
-    background-color: rgba(192, 128, 0, 0.1);
+.match-ok {
+    display: none;
 }
 
-.score-1, .score-0 {
+.match-marginal, .yellow {
+    background-color: rgba(255, 255, 0, 0.1);
+}
+
+.match-bad, .red {
     background-color: rgba(255, 0, 0, 0.1);
 }
+
