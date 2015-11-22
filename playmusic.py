@@ -96,5 +96,5 @@ class PlayMusic():
         return playlist_id
 
     def add_track(self, play_id):
-        #self.client.add_aa_track(play_id)
+        self.client.add_aa_track(play_id)
         pass

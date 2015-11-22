@@ -6,6 +6,7 @@ import sys
 from match import match_tracks
 from playmusic import PlayMusic
 from rdio import Rdio
+from report import Report
 
 print 'Connecting to Rdio...'
 rdio = Rdio()
@@ -26,17 +27,19 @@ def migrate_playlist(user_key, playlist, logfile):
     play_track_ids = []
     failed = []
     tracks = rdio.playlist_tracks(playlist)
-    for match in match_tracks(tracks, len(tracks), pm, logfile):
-        if match.matched():
-            play_track_ids.append(match.play.id)
-        else:
-            failed.append(match)
-    if failed:
-        description += 'Failed to import: '
-        for match in failed:
-            description += u'%s (%s / %s / %s)' % (match.rdio.url, match.rdio.name, match.rdio.artist, match.rdio.album)
-    playlist_id = pm.create_playlist(name, description, play_track_ids)
-    print u'Imported to %s' % pm.playlist_url(playlist_id)
+    with Report('playlist-%s.html' % playlist['key'], name) as report:
+        for match in match_tracks(tracks, len(tracks), pm, logfile):
+            report.add_match(match)
+            if match.matched():
+                play_track_ids.append(match.play.id)
+            else:
+                failed.append(match)
+        if failed:
+            description += 'Failed to import: '
+            for match in failed:
+                description += u'%s (%s / %s / %s)' % (match.rdio.url, match.rdio.name, match.rdio.artist, match.rdio.album)
+        playlist_id = pm.create_playlist(name, description, play_track_ids)
+        print u'Imported to %s' % pm.playlist_url(playlist_id)
 
 
 def migrate_playlists(rdio_username):
@@ -63,14 +66,15 @@ def migrate_favorites(rdio_username):
     logfile = codecs.open('favorites-log.txt', 'wt', 'utf-8')
     user = rdio.call('findUser', vanityName=rdio_username, extras='trackCount')
     print 'Migrating %(trackCount)d favorites for %(firstName)s %(lastName)s' % user
-    start = 0
 
     rdio_tracks = rdio.favorite_tracks(user['key'])
-    matched_tracks = match_tracks(rdio_tracks, user['trackCount'], pm, logfile)
-    for match in matched_tracks:
-        if match.matched():
-            pm.add_track(match.play_id)
+    with Report('favorites.html', "%(firstName)s %(lastName)s's Favorites" % user) as report:
+        matched_tracks = match_tracks(rdio_tracks, user['trackCount'], pm, logfile)
+        for match in matched_tracks:
+            report.add_match(match)
+            if match.matched():
+                pm.add_track(match.play.id)
 
 
-# migrate_favorites('ian')
+migrate_favorites('ian')
 migrate_playlists('ian')

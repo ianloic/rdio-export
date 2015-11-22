@@ -18,8 +18,12 @@ class Track:
     def __str__(self):
         return '%s / %s / %s <%s>' % (self.name, self.artist, self.album, self.url)
 
+    def html(self):
+        return ('<a href="%s"><span class="name">%s</span> / <span class="artist">%s</span> / ' +
+                '<span class="album">%s</span></a>') % (self.url, self.name, self.artist, self.album)
 
-def levenshteinDistance(s1, s2):
+
+def levenshtein_distance(s1, s2):
     # from: http://stackoverflow.com/questions/2460177/edit-distance-in-python
     if len(s1) > len(s2):
         s1, s2 = s2, s1
@@ -82,7 +86,7 @@ def string_match(a, b):
 
     # Edit distance
     # TODO: weight by length?
-    return 100 / (levenshteinDistance(a, b) + 1)
+    return 100 / (levenshtein_distance(a, b) + 1)
 
 
 def average(numbers):
@@ -145,14 +149,14 @@ class TrackMatch:
         self.match = match
 
     def matched(self):
-        return self.match >= 10
+        return self.match > 20
 
     def __str__(self):
         if self.rdio.available:
             stream = '+'
         else:
             stream = '-'
-        return u'%03d %s %s %s' %(self.match, stream, self.rdio, self.play)
+        return u'%03d %s %s %s' % (self.match, stream, self.rdio, self.play)
 
 
 def match_tracks(rdio_tracks, num_tracks, play_music, logfile):

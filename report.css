@@ -1,0 +1,42 @@
+body {
+    margin: 20px;
+}
+
+.header {
+    font-weight: bold;
+    font-size: 20pt;
+}
+
+a {
+    text-decoration: none;
+    color: black;
+}
+
+.name {
+    font-weight: bold;
+}
+
+.artist {
+    font-style: italic;
+}
+
+.album {
+    color: #666;
+}
+
+.track {
+    padding: 5px 0;
+    margin-bottom: 1px;
+}
+
+.score-10, .score-9, .score-8, .score-7, .score-6, .score-5 {
+    background-color: rgba(0, 255, 0, 0.1);
+}
+
+.score-4, .score-3, .score-2 {
+    background-color: rgba(192, 128, 0, 0.1);
+}
+
+.score-1, .score-0 {
+    background-color: rgba(255, 0, 0, 0.1);
+}

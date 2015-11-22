@@ -1,3 +1,5 @@
 __pycache__/
 *.py[cod]
 lib/
+playlist-*.html
+favorites.html
