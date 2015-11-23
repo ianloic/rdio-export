@@ -1,11 +1,10 @@
-import re
 import sys
 import time
 
 sys.path.insert(0, 'lib/')
 
 from gmusicapi import Mobileclient, CallFailure
-from match import Track, remove_parens
+from match import Track
 
 GOOGLE_USERNAME = 'import@mckellar.org'
 # GOOGLE_PASSWORD = 'Piah5ohC'
@@ -28,10 +27,6 @@ class PlayTrack(Track):
                        track_num=play_track['trackNumber'])
 
 
-def replace_non_alphanumeric(s):
-    return re.sub(r'[^A-Za-z0-9 ]', ' ', s)
-
-
 class PlayMusic():
     def __init__(self):
         self.client = Mobileclient()
@@ -48,8 +43,7 @@ class PlayMusic():
     def playlist_url(playlist_id):
         return 'https://play.google.com/music/playlist/%s' % playlist_id
 
-    def __search_tracks(self, *query_items):
-        query = ' '.join(query_items)
+    def search_tracks(self, query):
         if len(query) >= MAX_QUERY_LENGTH:
             # long queries don't work for some reason
             # for example "The Moderately Talented Yet Attractive Young Woman vs. The Exceptionally Talented Yet Not
@@ -73,23 +67,6 @@ class PlayMusic():
                 # sleep for two seconds before retrying
                 time.sleep(2)
         return [PlayTrack(song['track']) for song in response['song_hits']]
-
-    def tracks_matching(self, rdio_track):
-        """
-        :type rdio_track Track
-        """
-        # search for matching tracks
-        return (self.__search_tracks(rdio_track.name,
-                                     rdio_track.artist,
-                                     rdio_track.album) +
-                self.__search_tracks(remove_parens(rdio_track.name),
-                                     remove_parens(rdio_track.artist),
-                                     remove_parens(rdio_track.album)) +
-                self.__search_tracks(remove_parens(rdio_track.name),
-                                     remove_parens(rdio_track.artist)) +
-                self.__search_tracks(replace_non_alphanumeric(rdio_track.name),
-                                     replace_non_alphanumeric(rdio_track.artist),
-                                     replace_non_alphanumeric(rdio_track.album)))
 
     def create_playlist(self, name, description, play_track_ids):
         playlist_id = self.client.create_playlist(name, description)

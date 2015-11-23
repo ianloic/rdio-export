@@ -59,6 +59,10 @@ def only_alphanumeric(s):
     return re.sub(r'[^A-Za-z0-9]', '', s)
 
 
+def replace_non_alphanumeric(s):
+    return re.sub(r'[^A-Za-z0-9\. ]', ' ', s)
+
+
 def string_match(a, b):
     """
 
@@ -106,6 +110,8 @@ def track_match(play_track, rdio_track):
     :type rdio_track Track
     :rtype int
     """
+    if not play_track:
+        return 0
     # Exclude artists that specialize in covers, unless they were actually requested
     if play_track.artist != rdio_track.artist and play_track.artist in COVERS:
         return 0
@@ -123,39 +129,24 @@ def track_match(play_track, rdio_track):
     return average(percentages)
 
 
-def best_match(play_tracks, rdio_track):
-    """
-    :type play_tracks List[Track]
-    :type rdio_track Track
-    :rtype TrackMatch
-    """
-    if not play_tracks:
-        # If there were no matches on Play, return an empty match.
-        return TrackMatch(rdio_track, None, 0)
-    # for each track, calculate match percentage
-    score = {}
-    for play_track in play_tracks:
-        score[play_track.id] = track_match(play_track, rdio_track)
-    # sort by match
-    play_tracks.sort(lambda a, b: cmp(score[a.id], score[b.id]))
-    # chose the highest match
-    best = play_tracks[-1]
-    return TrackMatch(rdio_track, best, score[best.id])
-
-
 class TrackMatch:
-    def __init__(self, rdio_track, play_track, match):
+    def __init__(self, rdio_track, play_track):
         """
         :type rdio_track: Track
         :type play_track: Track
-        :type match: int
         """
         self.rdio = rdio_track
         self.play = play_track
-        self.match = match
+        self.match = track_match(play_track, rdio_track)
+
+    def __cmp__(self, other):
+        return cmp(self.match, other.match)
 
     def matched(self):
         return self.match > 20
+
+    def confident(self):
+        return self.match > 50
 
     def __str__(self):
         if self.rdio.available:
@@ -165,15 +156,50 @@ class TrackMatch:
         return u'%03d %s %s %s' % (self.match, stream, self.rdio, self.play)
 
 
+def search_queries(track):
+    """
+    Generate search queries for a track.
+    :param track:
+    :type track Track
+    :return: a search query string
+    :rtype List[string]
+    """
+    return (' '.join((track.name,
+                      track.artist,
+                      track.album)),
+            ' '.join((remove_parens(track.name),
+                      remove_parens(track.artist),
+                      remove_parens(track.album))),
+            ' '.join((remove_parens(track.name),
+                      remove_parens(track.artist))),
+            ' '.join((replace_non_alphanumeric(track.name),
+                      replace_non_alphanumeric(track.artist),
+                      replace_non_alphanumeric(track.album))))
+
+
 def match_tracks(rdio_tracks, num_tracks, play_music):
+    """
+    :type rdio_tracks List[rdio.RdioTrack]
+    :type num_tracks int
+    :type play_music playmusic.PlayMusic
+    """
     count = 0
     matched = 0
     unmatched = 0
     unmatched_missing = 0
 
     for rdio_track in rdio_tracks:
-        matches = play_music.tracks_matching(rdio_track)
-        match = best_match(matches, rdio_track)
+        matches = []
+        # Try each kind of query until we get a confident match
+        for query in search_queries(rdio_track):
+            matches.extend([TrackMatch(rdio_track, play_track) for play_track in play_music.search_tracks(query)])
+            matches.sort(reverse=True)
+            if matches and matches[0].confident():
+                break
+        if matches:
+            match = matches[0]
+        else:
+            match = TrackMatch(rdio_track, None)
         yield match
         if match.matched():
             matched += 1
