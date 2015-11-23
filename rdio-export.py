@@ -1,21 +1,29 @@
 #!/usr/bin/env python
-
-import codecs
+import getpass
 import re
 import sys
+import argparse
 
 from match import match_tracks
 from playmusic import PlayMusic
 from rdio import Rdio
 from report import Report
 
+parser = argparse.ArgumentParser(description='Export playlists and favorites from Rdio to Play Music')
+parser.add_argument('rdio_username', help='username on Rdio')
+parser.add_argument('google_email', help='Google account email address')
+args = parser.parse_args()
+
+google_password = getpass.getpass('%s password:' % args.google_email)
+
 print 'Connecting to Rdio...'
 rdio = Rdio()
 print 'Connecting to Play Music...'
-pm = PlayMusic()
+pm = PlayMusic(args.google_email, google_password)
 if not pm.is_authenticated():
     print 'Google login failed.'
     sys.exit(1)
+
 
 
 def migrate_playlist(user_key, playlist):
@@ -84,5 +92,5 @@ def migrate_favorites(rdio_username):
                 pm.add_track(match.play.id)
 
 
-migrate_favorites('ian')
-migrate_playlists('ian')
+migrate_playlists(args.rdio_username)
+migrate_favorites(args.rdio_username)

@@ -1,3 +1,4 @@
+import hashlib
 import sys
 import time
 
@@ -5,11 +6,6 @@ sys.path.insert(0, 'lib/')
 
 from gmusicapi import Mobileclient, CallFailure
 from match import Track
-
-GOOGLE_USERNAME = 'import@mckellar.org'
-# GOOGLE_PASSWORD = 'Piah5ohC'
-GOOGLE_PASSWORD = 'ckwykmfopdvqwlfg'
-GOOGLE_ANDROID_ID = '10a231a66f301274'
 
 MAX_QUERY_LENGTH = 120
 
@@ -28,9 +24,13 @@ class PlayTrack(Track):
 
 
 class PlayMusic():
-    def __init__(self):
-        self.client = Mobileclient()
-        self.client.login(GOOGLE_USERNAME, GOOGLE_PASSWORD, GOOGLE_ANDROID_ID)
+    def __init__(self, google_username, google_password):
+        self.client = Mobileclient(validate=False)
+        # generate a stable, unique android id
+        h = hashlib.sha256()
+        h.update(google_username)
+        android_id = h.hexdigest()[:16]
+        self.client.login(google_username, google_password, android_id)
 
     def is_authenticated(self):
         return self.client.is_authenticated()
