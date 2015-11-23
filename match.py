@@ -25,7 +25,7 @@ class Track:
                 '<span class="album">%s</span></a>') % (self.url, self.name, self.artist, self.album)
 
 
-def levenshtein_distance(s1, s2):
+def edit_distance(s1, s2):
     # from: http://stackoverflow.com/questions/2460177/edit-distance-in-python
     if len(s1) > len(s2):
         s1, s2 = s2, s1
@@ -92,7 +92,7 @@ def string_match(a, b):
 
     # Edit distance
     # TODO: weight by length?
-    return 100 / (levenshtein_distance(a, b) + 1)
+    return 100 / (edit_distance(a, b) + 1)
 
 
 def average(numbers):
