@@ -21,8 +21,25 @@ class Report:
                     <input type="checkbox" id="show">
                     <label for="show">Show good matches</label>
                 </div>
+                <script>
+                    $('#show').change(function() {
+                        if ($(this).is(':checked')) {
+                            $('.match-ok').show(0);
+                        } else {
+                            $('.match-ok').hide(0);
+                        }
+                    })
+                </script>
                 <div>
-                    <p>
+                    <p><b>Legend</b></p>
+                    <dl>
+                        <dt class="green">green</dt>
+                        <dd>A good, confident match.</dd>
+                        <dt class="yellow">yellow</dt>
+                        <dd>A marginal match, but imported optimistically</dd>
+                        <dt class="red">red</dt>
+                    <dd>No match or a bad match, not imported</dd>
+                    </dl>
                 </div>
                 <div class="pure-g header">
                     <div class="pure-u-4-24">Score</div>
@@ -56,15 +73,6 @@ class Report:
 
     def close(self):
         self.f.write('''
-            <script>
-                $('#show').change(function() {
-                    if ($(this).is(':checked')) {
-                        $('.match-ok').show(0);
-                    } else {
-                        $('.match-ok').hide(0);
-                    }
-                })
-            </script>
             </body>
         </html>
         ''')
