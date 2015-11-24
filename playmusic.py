@@ -26,6 +26,8 @@ from match import Track
 
 MAX_QUERY_LENGTH = 120
 
+RETRIES = 5
+
 
 class PlayTrack(Track):
     def __init__(self, play_track):
@@ -72,7 +74,7 @@ class PlayMusic():
                     break
                 query += ' ' + part
 
-        retries = 5
+        retries = RETRIES
         response = None
         while retries and not response:
             retries -= 1
@@ -91,7 +93,17 @@ class PlayMusic():
         return playlist_id
 
     def add_track(self, play_id):
-        self.client.add_aa_track(play_id)
+        retries = RETRIES
+        while retries >= 0:
+            retries -= 1
+            try:
+                self.client.add_aa_track(play_id)
+                break
+            except CallFailure, e:
+                if not retries:
+                    raise e
+                time.sleep(2)
+
 
     def get_all_playlists(self):
         return self.client.get_all_playlists()
