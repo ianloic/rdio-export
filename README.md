@@ -27,7 +27,7 @@ Running
 To import all your public Rdio playlists and favorites into your Play Music account run with your Rdio username and 
 Google account.
 
-    python rdio-export rdio_username yourname@gmail.com
+    python rdio-export.py rdio_username yourname@gmail.com
 
 Then enter your Google App password, sit back and let the program do its thing. It can take a while.
 
