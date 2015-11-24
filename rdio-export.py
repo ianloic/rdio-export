@@ -1,8 +1,8 @@
 #!/usr/bin/env python
+import argparse
 import getpass
 import re
 import sys
-import argparse
 
 from match import match_tracks
 from playmusic import PlayMusic
@@ -25,7 +25,6 @@ if not pm.is_authenticated():
     sys.exit(1)
 
 
-
 def migrate_playlist(user_key, playlist):
     print u'\nMigrating playlist: %s' % playlist['name']
     name = playlist['name']
@@ -46,7 +45,7 @@ def migrate_playlist(user_key, playlist):
             description += 'Failed to import: '
             for match in failed:
                 description += u'%s (%s / %s / %s)' % (
-                match.rdio.url, match.rdio.name, match.rdio.artist, match.rdio.album)
+                    match.rdio.url, match.rdio.name, match.rdio.artist, match.rdio.album)
         playlist_id = pm.create_playlist(name, description, play_track_ids)
         print u'Imported to %s' % pm.playlist_url(playlist_id)
 
@@ -68,8 +67,9 @@ def migrate_playlists(rdio_username):
 
     # Find already imported playlists's Rdio URL.
     imported = frozenset([m.groups()[0] for m in
-                          [re.match(r'Imported from Rdio playlist (http://rd.io/x/.*?/)', p['description']) for p in
-                           pm.get_all_playlists()] if m])
+                          [re.match(r'Imported from Rdio playlist (http://rd.io/x/.*?/)', p['description'])
+                           for p in pm.get_all_playlists() if 'description' in p]
+                          if m])
 
     for playlist in playlists.values():
         if playlist['shortUrl'] in imported:

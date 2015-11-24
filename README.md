@@ -30,3 +30,6 @@ Google account.
     python rdio-export rdio_username yourname@gmail.com
 
 Then enter your Google App password, sit back and let the program do its thing. It can take a while.
+
+After it runs there will be HTML reports generated for your imported favorites (`favorites.html`) and for each 
+playlist (`playlist-*.html`). Take a look to make sure the tool did the right thing with your data.
