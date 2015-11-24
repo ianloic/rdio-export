@@ -1,11 +1,24 @@
+# Copyright 2015 Ian McKellar <http://ian.mckellar.org/>
+#
+# This file is part of Rdio Export.
+#
+# Rdio Export is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Rdio Export is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Rdio Export.  If not, see <http://www.gnu.org/licenses/>.
+
 import requests
-
 import time
-
 from match import Track
 
-#CLIENT_ID = 'p4e6qtaqprct7h2c3y3qxhobmm'
-#CLIENT_SECRET = 'ZQpKs4rAen7eKMTwTX9IXg'
 CLIENT_ID = 'e3b4yf4qlfaczasrh5y2t7wr74'
 CLIENT_SECRET = 'Gtwwvr2toSey0O_slclZUw'
 
