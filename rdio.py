@@ -72,7 +72,10 @@ class Rdio:
         :param playlist: a playlist from the Rdio service that includes the 'tracks' extra
         :return: an array of RdioTracks for the playlist's tracks
         """
-        return [RdioTrack(t) for t in playlist['tracks']]
+        if 'tracks' in playlist:
+            return [RdioTrack(t) for t in playlist['tracks']]
+        else:
+            return None
 
     def favorite_tracks(self, user_key):
         """

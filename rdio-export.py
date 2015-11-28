@@ -52,6 +52,9 @@ def migrate_playlist(user_key, playlist):
     play_track_ids = []
     failed = []
     tracks = rdio.playlist_tracks(playlist)
+    if tracks is None:
+        print u'Can\'t get tracks for playlist "%s" - it might be private.' % playlist['name']
+        return
     with Report('playlist-%s.html' % playlist['key'], name) as report:
         for match in match_tracks(tracks, len(tracks), pm):
             report.add_match(match)
