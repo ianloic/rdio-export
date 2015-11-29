@@ -21,7 +21,7 @@ import time
 
 sys.path.insert(0, 'lib/')
 
-from gmusicapi import Mobileclient, CallFailure
+from gmusicapi import Mobileclient
 from match import Track
 
 MAX_QUERY_LENGTH = 120
@@ -80,7 +80,7 @@ class PlayMusic():
             retries -= 1
             try:
                 response = self.client.search_all_access(query)
-            except CallFailure, e:
+            except Exception, e:
                 if not retries:
                     raise e
                 # sleep for two seconds before retrying
@@ -99,11 +99,10 @@ class PlayMusic():
             try:
                 self.client.add_aa_track(play_id)
                 break
-            except CallFailure, e:
+            except Exception, e:
                 if not retries:
                     raise e
                 time.sleep(2)
-
 
     def get_all_playlists(self):
         return self.client.get_all_playlists()

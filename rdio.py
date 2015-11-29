@@ -59,7 +59,8 @@ class Rdio:
                 return r.json()['result']
             else:
                 retries -= 1
-                time.sleep(3)
+                print 'Retrying Rdio API call: ' + method
+                time.sleep(20)
         raise Exception('Rdio API call "%s" failed' % method)
 
     def get_one(self, key, extras=''):
