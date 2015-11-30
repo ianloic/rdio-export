@@ -52,16 +52,25 @@ class Rdio:
     def call(self, method, **args):
         args['method'] = method
         retries = 5
+        ex = None
         while retries:
-            r = requests.post('https://services.rdio.com/api/1/', data=args,
-                              headers={'Authorization': 'Bearer ' + self.bearer_token})
-            if r.status_code != 408:
+            r = None
+            ex = None
+            try:
+                r = requests.post('https://services.rdio.com/api/1/', data=args,
+                                  headers={'Authorization': 'Bearer ' + self.bearer_token})
+            except Exception, e:
+                ex = e
+            if r is not None and r.status_code == 200:
                 return r.json()['result']
             else:
                 retries -= 1
                 print 'Retrying Rdio API call: ' + method
                 time.sleep(20)
-        raise Exception('Rdio API call "%s" failed' % method)
+        if ex:
+            raise ex
+        else:
+            raise Exception('Rdio API call "%s" failed' % method)
 
     def get_one(self, key, extras=''):
         return self.call('get', keys=key, extras=extras)[key]
