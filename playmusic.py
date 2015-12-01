@@ -20,6 +20,7 @@ import sys
 import time
 
 sys.path.insert(0, 'lib/')
+sys.path.insert(0, 'gmusicapi-module/')
 
 from gmusicapi import Mobileclient
 from match import Track

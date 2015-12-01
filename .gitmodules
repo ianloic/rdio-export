@@ -1,0 +1,3 @@
+[submodule "gmusicapi-module"]
+	path = gmusicapi-module
+	url = https://github.com/ianloic/gmusicapi.git
