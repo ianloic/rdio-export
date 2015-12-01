@@ -18,9 +18,13 @@ Google password.
 
 Setup
 -----
-Install the required dependencies by running:
+Install the right version of the gmusicapi module by running:
 
-    pip install --user -r requirements.txt
+    git submodule update --init
+
+and its dependencies by running
+
+    pip install --user -r gmusicapi-module/requirements.txt
 
 Running
 -------
@@ -33,3 +37,10 @@ Then enter your Google App password, sit back and let the program do its thing. 
 
 After it runs there will be HTML reports generated for your imported favorites (`favorites.html`) and for each 
 playlist (`playlist-*.html`). Take a look to make sure the tool did the right thing with your data.
+
+Matching
+--------
+This script does its best to match the tracks from Rdio to those on Google Play Music. Sometimes it will get
+things wrong. You should look through the HTML reports to make sure it did the right thing. It's also slow.
+For each Rdio track the Google Play Music catalog will be searched at least a couple of times to make sure that
+the best match has been found. It tries to avoid picking "karaoke" or instrumental cover tracks if possible.
