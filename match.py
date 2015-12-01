@@ -19,8 +19,8 @@ import re
 import sys
 import unicodedata
 
-COVERS = {'Vitamin String Quartet'}
-
+COVERS_ARTISTS = {'Vitamin String Quartet'}
+COVERS_WORDS = {'Tribute', 'Karaoke'}
 
 class Track:
     def __init__(self, id, url, name, artist, album, album_artist, duration, track_num, available=True):
@@ -130,8 +130,14 @@ def track_match(play_track, rdio_track):
     if not play_track:
         return 0
     # Exclude artists that specialize in covers, unless they were actually requested
-    if play_track.artist != rdio_track.artist and play_track.artist in COVERS:
+    if play_track.artist != rdio_track.artist and play_track.artist in COVERS_ARTISTS:
         return 0
+    # If there are words associated with covers or karaoke in the Play artist or album
+    # but not the Rdio version, assume a bad match.
+    for word in COVERS_WORDS:
+        if (word in play_track.artist and not word in rdio_track.artist) or \
+		(word in play_track.album and not word in rdio_track.album):
+            return 0
     # TODO: exclude 'Karaoke' tracks (unless that's what we had)
     percentages = [
         string_match(play_track.name, rdio_track.name),
@@ -160,7 +166,10 @@ class TrackMatch:
         return cmp(self.match, other.match)
 
     def matched(self):
-        return self.match > 20
+	if self.rdio.available:
+	    return self.match > 20
+        else:
+            return self.match > 50
 
     def confident(self):
         return self.match > 50
