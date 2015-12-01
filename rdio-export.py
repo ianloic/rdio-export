@@ -71,9 +71,8 @@ def migrate_playlist(user_key, playlist):
         print u'Imported to %s' % pm.playlist_url(playlist_id)
 
 
-def migrate_playlists(rdio_username):
+def migrate_playlists(user):
     print 'Finding playlists...'
-    user = rdio.call('findUser', vanityName=rdio_username, extras='trackCount')
     user_key = user['key']
     playlists = {}
     for kind in ('owned', 'collab', 'favorites', 'subscribed'):
@@ -100,8 +99,7 @@ def migrate_playlists(rdio_username):
         migrate_playlist(user_key, playlist)
 
 
-def migrate_favorites(rdio_username):
-    user = rdio.call('findUser', vanityName=rdio_username, extras='trackCount')
+def migrate_favorites(user):
     print 'Migrating %(trackCount)d favorites for %(firstName)s %(lastName)s' % user
 
     rdio_tracks = rdio.favorite_tracks(user['key'])
@@ -112,6 +110,10 @@ def migrate_favorites(rdio_username):
             if match.matched():
                 pm.add_track(match.play.id)
 
+if '@' in args.rdio_username:
+    rdio_user = rdio.call('findUser', email=args.rdio_username, extras='trackCount')
+else:
+    rdio_user = rdio.call('findUser', vanityName=args.rdio_username, extras='trackCount')
 
-migrate_playlists(args.rdio_username)
-migrate_favorites(args.rdio_username)
+migrate_playlists(rdio_user)
+migrate_favorites(rdio_user)

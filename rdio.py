@@ -47,7 +47,11 @@ class Rdio:
         r = requests.post('https://services.rdio.com/oauth2/token', data={
             'grant_type': 'client_credentials'
         }, auth=(CLIENT_ID, CLIENT_SECRET))
-        self.bearer_token = r.json()['access_token']
+        if callable(r.json):
+          json = r.json()
+        else:
+          json = r.json
+        self.bearer_token = json['access_token']
 
     def call(self, method, **args):
         args['method'] = method
@@ -62,7 +66,11 @@ class Rdio:
             except Exception, e:
                 ex = e
             if r is not None and r.status_code == 200:
-                return r.json()['result']
+                if callable(r.json):
+                  json = r.json()
+                else:
+                  json = r.json
+                return json['result']
             else:
                 retries -= 1
                 print 'Retrying Rdio API call: ' + method
