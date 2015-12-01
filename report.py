@@ -55,7 +55,9 @@ class Report:
                         <dt class="yellow">yellow</dt>
                         <dd>A marginal match, but imported optimistically</dd>
                         <dt class="red">red</dt>
-                    <dd>No match or a bad match, not imported</dd>
+                        <dd>No match or a bad match, not imported</dd>
+                        <dt class="unavailable">strikethrough</dt>
+                        <dd>The track wasn't available on Rdio so might not be streamable on Play either</dd>
                     </dl>
                 </div>
                 <div class="pure-g header">
@@ -80,6 +82,8 @@ class Report:
                 match_class = 'match-ok'
         else:
             match_class = 'match-bad'
+        if not match.rdio.available:
+            match_class += ' unavailable'
         self.f.write('''
                 <div class="pure-g track %s">
                     <div class="pure-u-4-24 score">%d</div>
