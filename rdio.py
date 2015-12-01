@@ -16,6 +16,7 @@
 # along with Rdio Export.  If not, see <http://www.gnu.org/licenses/>.
 
 import requests
+import sys
 import time
 from match import Track
 
@@ -100,8 +101,9 @@ class Rdio:
         A generator for a the tracks a user has favorited.
         """
         start = 0
+	tracks = []
         while True:
-            faves = self.call('getFavorites', user=user_key, types='tracksAndAlbums', extras='tracks', start=start)
+            faves = self.call('getFavorites', user=user_key, types='tracksAndAlbums', extras='tracks', start=start, count=50)
             if len(faves):
                 start += len(faves)
             else:
@@ -109,8 +111,12 @@ class Rdio:
 
             for fave in faves:
                 if fave['type'] == 'a':
-                    for track in fave['tracks']:
-                        yield RdioTrack(track)
+                    tracks.extend([RdioTrack(track) for track in fave['tracks']])
                 elif fave['type'] == 't':
-                    yield RdioTrack(fave)
+                    tracks.append(RdioTrack(fave))
+	    sys.stdout.write(' Found %d favorite tracks...\r' % len(tracks))
+            sys.stdout.flush()
+        sys.stdout.write('\n')
+        sys.stdout.flush()
+        return tracks
 

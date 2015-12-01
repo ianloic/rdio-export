@@ -56,7 +56,7 @@ def migrate_playlist(user_key, playlist):
         print u'Can\'t get tracks for playlist "%s" - it might be private.' % playlist['name']
         return
     with Report('playlist-%s.html' % playlist['key'], name) as report:
-        for match in match_tracks(tracks, len(tracks), pm):
+        for match in match_tracks(tracks, pm):
             report.add_match(match)
             if match.matched():
                 play_track_ids.append(match.play.id)
@@ -100,20 +100,22 @@ def migrate_playlists(user):
 
 
 def migrate_favorites(user):
-    print 'Migrating %(trackCount)d favorites for %(firstName)s %(lastName)s' % user
+    print 'Migrating favorites for %(firstName)s %(lastName)s' % user
 
-    rdio_tracks = rdio.favorite_tracks(user['key'])
+    print 'Scanning Rdio favorite...'
+    rdio_tracks = list(rdio.favorite_tracks(user['key']))
+    print 'Migrating %d favorites' % len(rdio_tracks)
     with Report('favorites.html', "%(firstName)s %(lastName)s's Favorites" % user) as report:
-        matched_tracks = match_tracks(rdio_tracks, user['trackCount'], pm)
+        matched_tracks = match_tracks(rdio_tracks, pm)
         for match in matched_tracks:
             report.add_match(match)
             if match.matched():
                 pm.add_track(match.play.id)
 
 if '@' in args.rdio_username:
-    rdio_user = rdio.call('findUser', email=args.rdio_username, extras='trackCount')
+    rdio_user = rdio.call('findUser', email=args.rdio_username)
 else:
-    rdio_user = rdio.call('findUser', vanityName=args.rdio_username, extras='trackCount')
+    rdio_user = rdio.call('findUser', vanityName=args.rdio_username)
 
 migrate_playlists(rdio_user)
 migrate_favorites(rdio_user)

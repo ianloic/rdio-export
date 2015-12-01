@@ -194,16 +194,17 @@ def search_queries(track):
                       replace_non_alphanumeric(track.album))))
 
 
-def match_tracks(rdio_tracks, num_tracks, play_music):
+def match_tracks(rdio_tracks, play_music):
     """
     :type rdio_tracks List[rdio.RdioTrack]
-    :type num_tracks int
     :type play_music playmusic.PlayMusic
     """
     count = 0
     matched = 0
     unmatched = 0
     unmatched_missing = 0
+
+    num_tracks = len(rdio_tracks)
 
     for rdio_track in rdio_tracks:
         matches = []
